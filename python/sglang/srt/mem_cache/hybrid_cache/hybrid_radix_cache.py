@@ -617,6 +617,12 @@ class HybridRadixCache(BasePrefixCache):
 
         is_new_leaf = False
         if len(key):
+            if any(
+                comp.should_skip_leaf_creation(total_prefix_length, len(key), params)
+                for comp in self.components.values()
+            ):
+                self.token_to_kv_pool_allocator.free(value)
+                return InsertResult(prefix_len=total_prefix_length)
             target_node = self._add_new_node(node, key, value)
             is_new_leaf = True
         else:
