@@ -119,7 +119,6 @@ def _grouped_foreach_copy_(dsts: List[torch.Tensor], srcs: List[torch.Tensor]) -
 
 @dataclass
 class DecodeInputBuffers(ForwardInputBuffers):
-
     input_ids: torch.Tensor
     input_embeds: torch.Tensor
     req_pool_indices: torch.Tensor
@@ -436,7 +435,6 @@ def patch_model(
 
 
 def set_torch_compile_config():
-    import torch._dynamo.config
     import torch._inductor.config
 
     torch._inductor.config.coordinate_descent_tuning = True
@@ -589,7 +587,6 @@ class CudaGraphRunner:
             if self.dllm_config is None
             else self.dllm_config.block_size
         )
-        self.encoder_len_fill_value = 0
         if self.is_encoder_decoder:
             self.encoder_len_fill_value = int(
                 getattr(
@@ -598,6 +595,8 @@ class CudaGraphRunner:
                     1,
                 )
             )
+        else:
+            self.encoder_len_fill_value = 0
 
         if self.enable_torch_compile:
             set_torch_compile_config()
