@@ -202,19 +202,31 @@ def run_eval(args):
         ]
 
         scores_repeat = []
+        latencies = []
+        total_completion_tokens = 0
 
         for f in futures:
             result, latency, sampler = f.result()
             scores_repeat.append(result.score)
+            latencies.append(latency)
+            total_completion_tokens += sum(sampler._completion_tokens)
 
         mean_score = sum(scores_repeat) / len(scores_repeat)
+        mean_latency = sum(latencies) / len(latencies)
+        total_latency = sum(latencies)
         scores_repeat = [f"{s:.3f}" for s in scores_repeat]
         print("=" * 20)
         print(f"Repeat: {args.repeat}, mean: {mean_score:.3f}")
         print(f"Scores: {scores_repeat}")
+        print(f"Mean latency: {mean_latency:.3f} s")
         print("=" * 20)
         metrics = result.metrics | {"scores": scores_repeat}
         metrics = metrics | {"mean_score": mean_score}
+        metrics["latency"] = mean_latency
+
+        if total_completion_tokens > 0 and total_latency > 0:
+            metrics["output_throughput"] = total_completion_tokens / total_latency
+            print(f"Output throughput: {metrics['output_throughput']:.3f} token/s")
 
         # Report metrics to unified collection framework
         dump_metric(
