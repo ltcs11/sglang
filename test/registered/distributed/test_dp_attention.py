@@ -12,7 +12,7 @@ from sglang.test.kits.eval_accuracy_kit import MGSMEnMixin
 from sglang.test.kits.json_constrained_kit import JSONConstrainedMixin
 from sglang.test.kits.radix_cache_server_kit import run_radix_attention_test
 from sglang.test.kits.regex_constrained_kit import RegexConstrainedMixin
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_IMAGE_URL,
     DEFAULT_MLA_MODEL_NAME_FOR_TEST,
@@ -160,7 +160,7 @@ class TestDPAttentionDP2TP2DeepseekV3MTP(
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)

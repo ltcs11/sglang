@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.server_fixtures.disaggregation_fixture import get_rdma_devices_args
 from sglang.test.test_utils import (
     DEFAULT_MODEL_NAME_FOR_TEST_MLA,
@@ -75,7 +75,7 @@ class TestTP(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)

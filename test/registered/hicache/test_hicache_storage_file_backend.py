@@ -19,7 +19,7 @@ import requests
 from sglang.benchmark.utils import get_tokenizer
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_amd_ci, register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_MLA_MODEL_NAME_FOR_TEST,
     DEFAULT_MODEL_NAME_FOR_TEST,
@@ -303,7 +303,7 @@ def run_eval_accuracy_test(test_instance, accuracy_threshold: float = 0.03):
         host=f"http://{test_instance.base_host}",
         port=int(test_instance.base_port),
     )
-    metrics_initial = run_eval_few_shot_gsm8k(args_initial)
+    metrics_initial = run_eval(args_initial)
 
     # Flush cache to force remote storage access
     print("Phase 2: Flushing device cache...")
@@ -311,7 +311,7 @@ def run_eval_accuracy_test(test_instance, accuracy_threshold: float = 0.03):
 
     # Second evaluation - should use remote cache
     print("Phase 3: Running second GSM8K evaluation using remote cache...")
-    metrics_cached = run_eval_few_shot_gsm8k(args_initial)
+    metrics_cached = run_eval(args_initial)
 
     # Verify accuracy consistency
     accuracy_diff = abs(metrics_initial["accuracy"] - metrics_cached["accuracy"])

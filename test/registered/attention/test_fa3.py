@@ -6,7 +6,7 @@ import requests
 from sglang.srt.environ import envs
 from sglang.srt.utils import get_device_sm, kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_DRAFT_MODEL_EAGLE3,
     DEFAULT_MODEL_NAME_FOR_TEST,
@@ -105,7 +105,7 @@ class BaseFlashAttentionTest(CustomTestCase):
             num_shots=4,
             gsm8k_data_path=GSM_DATASET_PATH,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         # Use the appropriate metric key based on the test class

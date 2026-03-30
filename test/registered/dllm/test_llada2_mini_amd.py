@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_amd_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.send_one import BenchArgs, send_one_prompt
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -61,7 +61,7 @@ class TestLLaDA2MiniAMD(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         # Relaxed thresholds for AMD - may need adjustment

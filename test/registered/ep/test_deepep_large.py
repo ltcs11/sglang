@@ -5,7 +5,7 @@ import requests
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.send_one import BenchArgs, send_one_prompt
 from sglang.test.test_utils import (
     DEFAULT_DEEPEP_MODEL_NAME_FOR_TEST,
@@ -73,7 +73,7 @@ class TestDeepseek(CustomTestCase):
             num_examples=1200,
             num_threads=1200,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"Eval accuracy of GSM8K: {metrics=}")
 
         self.assertGreater(metrics["score"], 0.92)
@@ -139,7 +139,7 @@ class TestDeepseekMTP(CustomTestCase):
             num_examples=1200,
             num_threads=1200,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"Eval accuracy of GSM8K: {metrics=}")
 
         self.assertGreater(metrics["score"], 0.92)
@@ -197,7 +197,7 @@ class TestDeepseekV32TBO(CustomTestCase):
             num_examples=1200,
             num_threads=1200,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
         self.assertGreater(metrics["score"], 0.92)
 

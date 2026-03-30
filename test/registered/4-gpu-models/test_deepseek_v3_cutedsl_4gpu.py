@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_DEEPSEEK_NVFP4_MODEL_FOR_TEST,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -78,7 +78,7 @@ class TestDeepseekR1Nvfp4CuteDSLDeepEP(CustomTestCase):
             num_examples=512,
             num_threads=512,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"Eval accuracy of GSM8K: {metrics=}")
 
         self.assertGreater(metrics["score"], 0.92)
@@ -153,7 +153,7 @@ class TestDummyWithSBO(CustomTestCase):
             num_threads=512,
             num_shots=0,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"Eval accuracy of GSM8K: {metrics=}")
 
 

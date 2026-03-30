@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_MODEL_NAME_FOR_TEST,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -196,12 +196,12 @@ class TestPPWithHiCache(unittest.TestCase):
             num_threads=24,
         )
 
-        metrics_initial = run_eval_few_shot_gsm8k(args)
+        metrics_initial = run_eval(args)
         self.assertGreater(metrics_initial["score"], 0.6)
 
         self.flush_cache()
 
-        metrics_cached = run_eval_few_shot_gsm8k(args)
+        metrics_cached = run_eval(args)
         self.assertGreater(metrics_cached["score"], 0.6)
 
         accuracy_diff = abs(metrics_initial["score"] - metrics_cached["score"])

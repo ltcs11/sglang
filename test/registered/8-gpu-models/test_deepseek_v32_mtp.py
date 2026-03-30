@@ -6,7 +6,7 @@ import requests
 from sglang.srt.environ import envs
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.send_one import BenchArgs, send_one_prompt
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -71,7 +71,7 @@ class TestDeepseekV32DPMTP(CustomTestCase):
             num_threads=500,
             num_shots=20,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         server_info = requests.get(self.base_url + "/get_server_info")
@@ -156,7 +156,7 @@ class TestDeepseekV32DPMTPV2(CustomTestCase):
             num_threads=500,
             num_shots=20,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         server_info = requests.get(self.base_url + "/get_server_info")
@@ -237,7 +237,7 @@ class TestDeepseekV32TPMTP(CustomTestCase):
             num_threads=500,
             num_shots=20,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         server_info = requests.get(self.base_url + "/get_server_info")
@@ -319,7 +319,7 @@ class TestDeepseekV32TPMTPV2(CustomTestCase):
             num_threads=500,
             num_shots=20,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         server_info = requests.get(self.base_url + "/get_server_info")

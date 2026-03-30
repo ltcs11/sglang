@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -54,7 +54,7 @@ class TestKimiK2Thinking(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         if is_in_ci():

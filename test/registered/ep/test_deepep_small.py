@@ -6,7 +6,7 @@ import requests
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_MODEL_NAME_FOR_TEST_MLA,
     DEFAULT_MODEL_NAME_FOR_TEST_MLA_NEXTN,
@@ -58,7 +58,7 @@ class TestPureDP(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -101,7 +101,7 @@ class TestHybridDPTP(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -141,7 +141,7 @@ class TestTP(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -188,7 +188,7 @@ class TestNoGatherdBuffer(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -238,7 +238,7 @@ class TestTBO(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -285,7 +285,7 @@ class TestTBOWithTPAttn(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -336,7 +336,7 @@ class TestTBOWithTPAttnAndDenseDP(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -391,7 +391,7 @@ class TestMTP(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -463,7 +463,7 @@ class TestMTPWithTBO(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -537,7 +537,7 @@ class TestMTPWithTPAttnAndTBO(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)

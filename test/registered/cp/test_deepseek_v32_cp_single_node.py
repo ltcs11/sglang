@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from sglang.srt.environ import envs
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -75,7 +75,7 @@ class TestDeepseekV32CPInSeqSplit(CustomTestCase):
             num_threads=32,
             num_shots=20,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         if is_in_ci():
@@ -140,7 +140,7 @@ class TestDeepseekV32CPRoundRobinSplit(CustomTestCase):
             num_threads=32,
             num_shots=20,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"{metrics=}")
 
         if is_in_ci():

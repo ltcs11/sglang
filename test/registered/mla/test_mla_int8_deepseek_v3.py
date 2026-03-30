@@ -6,7 +6,7 @@ import torch
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -54,7 +54,7 @@ class TestMLADeepseekV3ChannelInt8(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreaterEqual(metrics["score"], 0.61)
@@ -108,7 +108,7 @@ class TestDeepseekV3MTPChannelInt8(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)
@@ -157,7 +157,7 @@ class TestMLADeepseekV3BlockInt8(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.62)
@@ -208,7 +208,7 @@ class TestDeepseekV3MTPBlockInt8(CustomTestCase):
             num_examples=200,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(metrics)
 
         self.assertGreater(metrics["score"], 0.60)

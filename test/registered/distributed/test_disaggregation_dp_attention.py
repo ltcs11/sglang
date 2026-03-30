@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from sglang.bench_serving import run_benchmark
 from sglang.srt.environ import envs
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.server_fixtures.disaggregation_fixture import (
     PDDisaggregationServerBase,
 )
@@ -100,7 +100,7 @@ class TestDisaggregationDPAttention(PDDisaggregationServerBase):
             num_examples=1400,
             num_threads=128,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
         print(f"Evaluation metrics: {metrics}")
 
         self.assertGreater(metrics["score"], 0.60)
