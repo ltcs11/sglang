@@ -2626,7 +2626,11 @@ def get_quantization_config(hf_config) -> str | None:
     """Extract quantization method from HuggingFace config."""
     quantization_config = getattr(hf_config, "quantization_config", None)
     if quantization_config is not None:
-        return quantization_config.get("quant_method")
+        quant_method = quantization_config.get("quant_method")
+        if quant_method is not None:
+            return quant_method
+        if quantization_config.get("global_quant_config") is not None:
+            return "quark"
     return None
 
 
