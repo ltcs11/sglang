@@ -774,6 +774,8 @@ class UnifiedRadixCache(BasePrefixCache):
             node = stack.pop()
             total_size += len(node.full_value)
             for component_name in self.tree_components:
+                if component_name == BASE_COMPONENT_NAME:
+                    continue
                 value = node.component_value(component_name)
                 if value is not None:
                     total_aux_size += len(value)
