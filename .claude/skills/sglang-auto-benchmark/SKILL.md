@@ -290,18 +290,31 @@ Outputs:
 
 ## Config Template
 
-Use:
-- `references/config-example.yaml`
+Standalone example (uses ShareGPT as dataset, a good starting point for non-cookbook models):
 - `references/qwen3-32b.yaml`
-- `references/llama3.1-70b-instruct.yaml`
-- `references/minimax-m2.5.yaml`
 
-The current reference set keeps the existing Qwen 32B example and adds:
-- Llama 3.1
-- MiniMax-M2.5
+Cookbook-derived configs live in `references/cookbook-llm/`.
+They default to synthetic `random` traffic and are runnable out of the box.
+See `references/cookbook-llm/README.md` for the full list.
 
-All reference configs intentionally use Hugging Face repo IDs by default.
-You can replace them with local model paths and local dataset paths when needed.
+Representative picks from that folder:
+- `references/cookbook-llm/llama-3.1-70b-instruct.yaml`
+- `references/cookbook-llm/llama-3.3-70b-instruct.yaml`
+- `references/cookbook-llm/llama-4-scout-17b-16e-instruct.yaml`
+- `references/cookbook-llm/llama-4-maverick-17b-128e-instruct-fp8.yaml`
+- `references/cookbook-llm/minimax-m2.5.yaml`
+- `references/cookbook-llm/minimax-m2.1.yaml`
+- `references/cookbook-llm/deepseek-v3.yaml`
+- `references/cookbook-llm/deepseek-v3.1.yaml`
+- `references/cookbook-llm/deepseek-v3.2.yaml`
+- `references/cookbook-llm/deepseek-r1-0528.yaml`
+- `references/cookbook-llm/qwen3-235b-a22b.yaml`
+- `references/cookbook-llm/qwen35-397b-a17b-fp8.yaml`
+- `references/cookbook-llm/mistral-small-4-119b-2603.yaml`
+- `references/cookbook-llm/kimi-k2-instruct.yaml`
+
+All reference configs use Hugging Face repo IDs by default.
+Replace `model_path` and `tokenizer` with local paths when the weights are already on disk.
 
 ## What To Report Back
 
