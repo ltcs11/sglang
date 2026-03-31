@@ -235,9 +235,9 @@ class MambaComponent(TreeComponent):
     def cleanup_after_caching_req(
         self,
         req: Req,
-        insert_result: Optional[InsertResult],
-        insert_params: Optional[InsertParams],
         is_finished: bool,
+        insert_result: Optional[InsertResult] = None,
+        insert_params: Optional[InsertParams] = None,
     ) -> None:
         if is_finished:
             mamba_exist = (

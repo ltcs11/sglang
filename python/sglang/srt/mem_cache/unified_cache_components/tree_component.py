@@ -272,15 +272,14 @@ class TreeComponent(ABC):
     def cleanup_after_caching_req(
         self,
         req: Req,
-        insert_result: Optional[InsertResult],
-        insert_params: Optional[InsertParams],
         is_finished: bool,
+        insert_result: Optional[InsertResult] = None,
+        insert_params: Optional[InsertParams] = None,
     ) -> None:
         """Post-cache cleanup for component-specific resources.
-        On disabled path, insert_result/insert_params are None.
-        - Full: no-op.
-        - SWA: no-op.
-        - Mamba: frees forked mamba_value based on mamba_exist,
-          frees mamba cache (handles ping-pong buffer keep_idx),
-          resets mamba_last_track_seqlen=None on unfinished."""
+
+        ``insert_result`` is None when insert was skipped (cache disabled
+        or effective_cache_len <= 0); treat as "no insert happened".
+        ``insert_params`` is None only on the disabled path; on early-return
+        paths it is still provided so components can free their resources."""
         pass

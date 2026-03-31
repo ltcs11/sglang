@@ -307,7 +307,7 @@ class UnifiedRadixCache(BasePrefixCache):
             ]
             self.token_to_kv_pool_allocator.free(kv_indices)
             for comp in self.components.values():
-                comp.cleanup_after_caching_req(req, None, None, True)
+                comp.cleanup_after_caching_req(req, is_finished=True)
             return
 
         token_ids = (req.origin_input_ids + req.output_ids)[:kv_committed_len]
@@ -360,7 +360,7 @@ class UnifiedRadixCache(BasePrefixCache):
 
         # cleanup
         for comp in self.components.values():
-            comp.cleanup_after_caching_req(req, result, insert_params, True)
+            comp.cleanup_after_caching_req(req, True, result, insert_params)
 
     def cache_unfinished_req(self, req: Req, chunked=False) -> None:
         token_ids = req.fill_ids
@@ -387,7 +387,9 @@ class UnifiedRadixCache(BasePrefixCache):
         if effective_cache_len <= 0:
             req.prefix_indices = kv_indices_orig.to(dtype=torch.int64, copy=True)
             for comp in self.components.values():
-                comp.cleanup_after_caching_req(req, None, insert_params, False)
+                comp.cleanup_after_caching_req(
+                    req, False, insert_params=insert_params
+                )
             return
 
         kv_indices = kv_indices_orig[:effective_cache_len]
@@ -438,9 +440,10 @@ class UnifiedRadixCache(BasePrefixCache):
 
         # cleanup
         for comp in self.components.values():
-            comp.cleanup_after_caching_req(req, result, insert_params, False)
+            comp.cleanup_after_caching_req(req, False, result, insert_params)
 
-    ## Internal Helper Functions
+    # ---- Internal Helpers ----
+
     def _for_each_component_lru(self, node: UnifiedTreeNode, lru_op):
         for ct, component in self.components.items():
             if component.node_has_component_data(node):
@@ -724,18 +727,15 @@ class UnifiedRadixCache(BasePrefixCache):
             self._remove_leaf_from_parent(cur)
             cur = cur.parent
 
-    ## Other Apis for Usage Checking
-    @property
-    def cache_req_mamba_pool(self):
-        return self.req_to_token_pool.mamba_pool
-
-    def supports_swa(self) -> bool:
-        return ComponentType.SWA in self.components
+    # ---- Query / Inspection Api ----
 
     @property
     def sliding_window_size(self):
         swa = self.components.get(ComponentType.SWA)
         return swa.sliding_window_size if swa else None
+
+    def supports_swa(self) -> bool:
+        return ComponentType.SWA in self.components
 
     def supports_mamba(self) -> bool:
         return ComponentType.MAMBA in self.components
@@ -834,7 +834,9 @@ class UnifiedRadixCache(BasePrefixCache):
             if ct.is_swa:
                 available_size = self.token_to_kv_pool_allocator.swa_available_size()
             elif ct.is_mamba:
-                available_size = self.cache_req_mamba_pool.available_size()
+                available_size = self.req_to_token_pool.mamba_pool.available_size()
+            else:
+                continue
 
             lines.append(
                 f"Available {ct}: {available_size + self.component_evictable_size_[ct]} "
