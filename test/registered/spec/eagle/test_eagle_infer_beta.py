@@ -54,7 +54,7 @@ class TestEagleServerBase(CustomTestCase, MatchedStopMixin):
             "--page-size",
             str(cls.page_size),
             "--mem-fraction-static",
-            "0.75",
+            "0.65",
             "--max-running-requests",
             str(cls.max_running_requests),
             "--cuda-graph-bs",
