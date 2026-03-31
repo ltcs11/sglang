@@ -3,18 +3,16 @@ Usage:
 python -m unittest test_moe_eval_accuracy_large.TestMoEEvalAccuracyLarge.test_mmlu
 """
 
-import os
 import unittest
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_amd_ci, register_cuda_ci
 from sglang.test.kits.eval_accuracy_kit import GSM8KMixin
 from sglang.test.test_utils import (
-    DEFAULT_MOE_MODEL_NAME_FOR_TEST,
+    DEFAULT_ENABLE_THINKING_MODEL_NAME_FOR_TEST,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
-    is_in_amd_ci,
     popen_launch_server,
 )
 
@@ -23,20 +21,13 @@ register_amd_ci(est_time=500, suite="stage-b-test-2-gpu-large-amd")
 
 
 class TestMoEEvalAccuracyLarge(CustomTestCase, GSM8KMixin):
-    gsm8k_accuracy_thres = 0.6
+    gsm8k_accuracy_thres = 0.93
+    gsm8k_chat_template_kwargs = {"enable_thinking": False}
 
     @classmethod
     def setUpClass(cls):
-        cls.model = DEFAULT_MOE_MODEL_NAME_FOR_TEST
+        cls.model = DEFAULT_ENABLE_THINKING_MODEL_NAME_FOR_TEST
         cls.base_url = DEFAULT_URL_FOR_TEST
-
-        # Disable AITER for AMD CI to ensure consistent results
-        env = None
-        if is_in_amd_ci():
-            env = os.environ.copy()
-            env["SGLANG_USE_AITER"] = "0"
-            env["SGLANG_USE_AITER_AR"] = "0"
-            env["HF_HUB_ENABLE_HF_TRANSFER"] = "0"
 
         cls.process = popen_launch_server(
             cls.model,
@@ -48,7 +39,6 @@ class TestMoEEvalAccuracyLarge(CustomTestCase, GSM8KMixin):
                 "--tp",
                 "2",
             ],
-            env=env,
         )
 
     @classmethod

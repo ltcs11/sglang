@@ -32,6 +32,7 @@ class GSM8KMixin:
     gsm8k_accept_length_thres: Optional[float] = None
     gsm8k_num_questions: int = 200
     gsm8k_num_threads: int = 128
+    gsm8k_chat_template_kwargs: Optional[dict] = None
 
     def test_gsm8k(self):
         assert (
@@ -46,6 +47,7 @@ class GSM8KMixin:
             eval_name="gsm8k",
             num_examples=self.gsm8k_num_questions,
             num_threads=self.gsm8k_num_threads,
+            chat_template_kwargs=self.gsm8k_chat_template_kwargs,
         )
         metrics = run_eval(args)
         print(f"{metrics=}")
