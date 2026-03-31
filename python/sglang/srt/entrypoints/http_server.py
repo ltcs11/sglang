@@ -2037,7 +2037,7 @@ def _close_main_process_sockets():
             sock.close()
 
 
-def _run_granian_server(server_args):
+def _run_granian_server(server_args: ServerArgs):
     """Launch Granian with HTTP/2 support."""
     from granian import Granian
     from granian.constants import HTTPModes, Interfaces, Loops
