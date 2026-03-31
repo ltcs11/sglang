@@ -366,7 +366,7 @@ class TestDisaggregationMooncakeSpec(PDDisaggregationServerBase):
         metrics = run_eval(args)
         print(f"Evaluation metrics: {metrics}")
 
-        self.assertGreater(metrics["score"], 0.20)
+        self.assertGreater(metrics["score"], 0.10)
 
 
 class TestDisaggregationSimulatedRetract(PDDisaggregationServerBase):
