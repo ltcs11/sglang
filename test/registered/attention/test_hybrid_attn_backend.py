@@ -8,10 +8,10 @@ from sglang.srt.utils import get_device_sm, kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
 from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
-    DEFAULT_DRAFT_MODEL_EAGLE,
+    DEFAULT_DRAFT_MODEL_EAGLE3,
     DEFAULT_MODEL_NAME_FOR_TEST,
     DEFAULT_MODEL_NAME_FOR_TEST_MLA,
-    DEFAULT_TARGET_MODEL_EAGLE,
+    DEFAULT_TARGET_MODEL_EAGLE3,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -59,7 +59,7 @@ class TestHybridAttnBackendBase(CustomTestCase):
             envs.SGLANG_ENABLE_JIT_DEEPGEMM.override(False),
         ):
             if cls.speculative_decode:
-                model = DEFAULT_TARGET_MODEL_EAGLE
+                model = DEFAULT_TARGET_MODEL_EAGLE3
             else:
                 model = cls.model
             cls.process = popen_launch_server(
@@ -120,16 +120,16 @@ class TestHybridAttnBackendTorchCompile(TestHybridAttnBackendBase):
 
 class TestHybridAttnBackendSpeculativeDecodingPrefillBackend(TestHybridAttnBackendBase):
     speculative_decode = True
-    # This eagle test uses a very small model, so the accuracy is low.
-    accuracy_threshold = 0.2
+    accuracy_threshold = 0.62
 
     @classmethod
     def get_server_args(cls):
         return DEFAULT_SERVER_ARGS + [
+            "--dtype=float16",
             "--speculative-algorithm",
             "EAGLE",
             "--speculative-draft-model-path",
-            DEFAULT_DRAFT_MODEL_EAGLE,
+            DEFAULT_DRAFT_MODEL_EAGLE3,
             "--speculative-num-steps",
             "3",
             "--speculative-eagle-topk",
@@ -143,16 +143,16 @@ class TestHybridAttnBackendSpeculativeDecodingPrefillBackend(TestHybridAttnBacke
 
 class TestHybridAttnBackendSpeculativeDecodingDecodeBackend(TestHybridAttnBackendBase):
     speculative_decode = True
-    # This eagle test uses a very small model, so the accuracy is low.
-    accuracy_threshold = 0.2
+    accuracy_threshold = 0.62
 
     @classmethod
     def get_server_args(cls):
         return DEFAULT_SERVER_ARGS + [
+            "--dtype=float16",
             "--speculative-algorithm",
             "EAGLE",
             "--speculative-draft-model-path",
-            DEFAULT_DRAFT_MODEL_EAGLE,
+            DEFAULT_DRAFT_MODEL_EAGLE3,
             "--speculative-num-steps",
             "3",
             "--speculative-eagle-topk",

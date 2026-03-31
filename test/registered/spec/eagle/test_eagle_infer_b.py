@@ -20,7 +20,7 @@ from sglang.test.kits.abort_timeout_kit import (
 from sglang.test.kits.radix_cache_server_kit import run_radix_attention_test
 from sglang.test.run_eval import run_eval
 from sglang.test.server_fixtures.eagle_fixture import EagleServerBase
-from sglang.test.test_utils import DEFAULT_TARGET_MODEL_EAGLE, run_logprob_check
+from sglang.test.test_utils import run_logprob_check
 
 register_cuda_ci(est_time=1100, suite="stage-b-test-1-gpu-large")
 
@@ -261,7 +261,7 @@ class TestEAGLEServerBasic(EagleServerBase):
         response = requests.post(
             self.base_url + "/v1/chat/completions",
             json={
-                "model": DEFAULT_TARGET_MODEL_EAGLE,
+                "model": self.target_model,
                 "messages": messages,
                 "temperature": 0,
                 "response_format": {"type": "json_object"},

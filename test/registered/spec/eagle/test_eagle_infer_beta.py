@@ -11,8 +11,8 @@ from sglang.test.kits.matched_stop_kit import MatchedStopMixin
 from sglang.test.kits.radix_cache_server_kit import run_radix_attention_test
 from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
-    DEFAULT_DRAFT_MODEL_EAGLE,
-    DEFAULT_TARGET_MODEL_EAGLE,
+    DEFAULT_DRAFT_MODEL_EAGLE3,
+    DEFAULT_TARGET_MODEL_EAGLE3,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -30,14 +30,15 @@ class TestEagleServerBase(CustomTestCase, MatchedStopMixin):
     spec_draft_tokens = 6
     page_size = 1
     other_launch_args = []
-    model = DEFAULT_TARGET_MODEL_EAGLE
-    draft_model = DEFAULT_DRAFT_MODEL_EAGLE
+    model = DEFAULT_TARGET_MODEL_EAGLE3
+    draft_model = DEFAULT_DRAFT_MODEL_EAGLE3
 
     @classmethod
     def setUpClass(cls):
         cls.base_url = DEFAULT_URL_FOR_TEST
         launch_args = [
             "--trust-remote-code",
+            "--dtype=float16",
             "--attention-backend",
             cls.attention_backend,
             "--speculative-algorithm",
