@@ -290,6 +290,7 @@ class TestDisaggregationMooncakeSpec(PDDisaggregationServerBase):
         cls.model = DEFAULT_TARGET_MODEL_EAGLE3
         cls.draft_model = DEFAULT_DRAFT_MODEL_EAGLE3
         cls.spec_args = [
+            "--dtype=float16",
             "--speculative-algorithm",
             "EAGLE",
             "--speculative-draft-model-path",
