@@ -64,7 +64,7 @@ benchmark:
     max_tpot_ms: 30
   output_dir: ./auto_benchmark_results/cookbook-llm/devstral-small-2-24b-instruct-2512
 search:
-  tier: 2
+  tier: 3
   max_candidates: 24
 speculative:
   enabled: false

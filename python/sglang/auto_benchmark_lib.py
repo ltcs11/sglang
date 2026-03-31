@@ -973,7 +973,7 @@ def run_auto_benchmark(config_path: str) -> str:
 
     dataset_cfg = normalize_dataset_cfg(config.get("dataset"), benchmark_cfg)
     scenarios = expand_dataset_scenarios(dataset_cfg)
-    tier = int(search_cfg.get("tier", 1))
+    tier = int(search_cfg.get("tier", 3))
     max_candidates = search_cfg.get("max_candidates")
     base_candidates = build_server_candidates(server_cfg, tier, max_candidates)
     scenario_records: List[Dict[str, Any]] = []

@@ -69,7 +69,7 @@ benchmark:
     max_tpot_ms: 30
   output_dir: ./auto_benchmark_results/cookbook-llm/llama-4-scout-17b-16e-instruct
 search:
-  tier: 2
+  tier: 3
   max_candidates: 24
 speculative:
   enabled: false

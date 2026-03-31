@@ -70,7 +70,7 @@ benchmark:
     max_tpot_ms: 30
   output_dir: ./auto_benchmark_results/cookbook-llm/deepseek-v3
 search:
-  tier: 2
+  tier: 3
   max_candidates: 24
 speculative:
   enabled: false

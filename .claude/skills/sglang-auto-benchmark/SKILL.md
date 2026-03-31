@@ -161,12 +161,17 @@ python3 -m sglang.auto_benchmark validate \
   - Fast sanity sweep.
   - Baseline plus a small one-at-a-time scan.
 - Tier 2
-  - Good default.
+  - Middle ground.
   - Small cartesian search on the first few high-priority keys plus one-at-a-time expansion for the rest.
 - Tier 3
   - Largest search.
   - Full cartesian product of the provided search space.
   - Slowest, but best when the search space is intentionally bounded.
+  - This is the default used by the reference configs.
+
+`search.max_candidates` still applies at all tiers, including tier 3.
+When it is set together with tier 3, the workflow still enumerates the full cartesian order conceptually, but only keeps the first `max_candidates` unique candidates after deduplication.
+That makes it useful as a safety valve, but it also means tier 3 is no longer truly exhaustive unless you remove the cap or raise it high enough.
 
 YAML key order matters. Put the most important search keys first.
 

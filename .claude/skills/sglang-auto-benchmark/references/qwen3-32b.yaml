@@ -48,7 +48,7 @@ benchmark:
   output_dir: ./auto_benchmark_results/qwen3-32b
 
 search:
-  tier: 2
+  tier: 3
   max_candidates: 24
 
 speculative:
