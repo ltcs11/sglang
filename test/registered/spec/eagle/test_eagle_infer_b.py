@@ -78,7 +78,7 @@ class TestEAGLEServerBasic(EagleServerBase):
 
         metrics = run_eval(args)
         print(f"{metrics=}")
-        self.assertGreater(metrics["score"], 0.20)
+        self.assertGreater(metrics["score"], 0.08)
 
         server_info = requests.get(self.base_url + "/server_info").json()
         avg_spec_accept_length = server_info["internal_states"][0][

@@ -6,12 +6,12 @@ import requests
 from sglang.srt.environ import envs
 from sglang.srt.utils import get_device_sm, kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
-from sglang.test.run_eval import run_eval
+from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
-    DEFAULT_DRAFT_MODEL_EAGLE3,
+    DEFAULT_DRAFT_MODEL_EAGLE,
     DEFAULT_MODEL_NAME_FOR_TEST,
     DEFAULT_MODEL_NAME_FOR_TEST_MLA,
-    DEFAULT_TARGET_MODEL_EAGLE3,
+    DEFAULT_TARGET_MODEL_EAGLE,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -59,7 +59,7 @@ class TestHybridAttnBackendBase(CustomTestCase):
             envs.SGLANG_ENABLE_JIT_DEEPGEMM.override(False),
         ):
             if cls.speculative_decode:
-                model = DEFAULT_TARGET_MODEL_EAGLE3
+                model = DEFAULT_TARGET_MODEL_EAGLE
             else:
                 model = cls.model
             cls.process = popen_launch_server(
@@ -77,19 +77,19 @@ class TestHybridAttnBackendBase(CustomTestCase):
         requests.get(self.base_url + "/flush_cache")
 
         args = SimpleNamespace(
-            base_url=self.base_url,
-            model=self.model,
-            eval_name="gsm8k",
-            num_examples=100,
-            num_threads=128,
             num_shots=4,
-            gsm8k_data_path=GSM_DATASET_PATH,
+            num_questions=100,
+            max_new_tokens=512,
+            parallel=128,
+            host="http://127.0.0.1",
+            port=int(self.base_url.split(":")[-1]),
+            data_path=GSM_DATASET_PATH,
         )
-        metrics = run_eval(args)
+        metrics = run_eval_few_shot_gsm8k(args)
         print(f"{metrics=}")
 
         # Use the appropriate metric key based on the test class
-        metric_key = "score"
+        metric_key = "accuracy"
         self.assertGreater(metrics[metric_key], self.accuracy_threshold)
 
         if self.speculative_decode:
@@ -120,16 +120,16 @@ class TestHybridAttnBackendTorchCompile(TestHybridAttnBackendBase):
 
 class TestHybridAttnBackendSpeculativeDecodingPrefillBackend(TestHybridAttnBackendBase):
     speculative_decode = True
-    accuracy_threshold = 0.62
+    # This eagle test uses a very small model, so the accuracy is low.
+    accuracy_threshold = 0.2
 
     @classmethod
     def get_server_args(cls):
         return DEFAULT_SERVER_ARGS + [
-            "--dtype=float16",
             "--speculative-algorithm",
             "EAGLE",
             "--speculative-draft-model-path",
-            DEFAULT_DRAFT_MODEL_EAGLE3,
+            DEFAULT_DRAFT_MODEL_EAGLE,
             "--speculative-num-steps",
             "3",
             "--speculative-eagle-topk",
@@ -143,16 +143,16 @@ class TestHybridAttnBackendSpeculativeDecodingPrefillBackend(TestHybridAttnBacke
 
 class TestHybridAttnBackendSpeculativeDecodingDecodeBackend(TestHybridAttnBackendBase):
     speculative_decode = True
-    accuracy_threshold = 0.62
+    # This eagle test uses a very small model, so the accuracy is low.
+    accuracy_threshold = 0.2
 
     @classmethod
     def get_server_args(cls):
         return DEFAULT_SERVER_ARGS + [
-            "--dtype=float16",
             "--speculative-algorithm",
             "EAGLE",
             "--speculative-draft-model-path",
-            DEFAULT_DRAFT_MODEL_EAGLE3,
+            DEFAULT_DRAFT_MODEL_EAGLE,
             "--speculative-num-steps",
             "3",
             "--speculative-eagle-topk",

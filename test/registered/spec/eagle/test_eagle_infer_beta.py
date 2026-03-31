@@ -7,12 +7,12 @@ import requests
 from sglang.srt.environ import envs
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_cuda_ci
+from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.kits.matched_stop_kit import MatchedStopMixin
 from sglang.test.kits.radix_cache_server_kit import run_radix_attention_test
-from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
-    DEFAULT_DRAFT_MODEL_EAGLE3,
-    DEFAULT_TARGET_MODEL_EAGLE3,
+    DEFAULT_DRAFT_MODEL_EAGLE,
+    DEFAULT_TARGET_MODEL_EAGLE,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -30,15 +30,14 @@ class TestEagleServerBase(CustomTestCase, MatchedStopMixin):
     spec_draft_tokens = 6
     page_size = 1
     other_launch_args = []
-    model = DEFAULT_TARGET_MODEL_EAGLE3
-    draft_model = DEFAULT_DRAFT_MODEL_EAGLE3
+    model = DEFAULT_TARGET_MODEL_EAGLE
+    draft_model = DEFAULT_DRAFT_MODEL_EAGLE
 
     @classmethod
     def setUpClass(cls):
         cls.base_url = DEFAULT_URL_FOR_TEST
         launch_args = [
             "--trust-remote-code",
-            "--dtype=float16",
             "--attention-backend",
             cls.attention_backend,
             "--speculative-algorithm",
@@ -54,7 +53,7 @@ class TestEagleServerBase(CustomTestCase, MatchedStopMixin):
             "--page-size",
             str(cls.page_size),
             "--mem-fraction-static",
-            "0.65",
+            "0.75",
             "--max-running-requests",
             str(cls.max_running_requests),
             "--cuda-graph-bs",
@@ -87,16 +86,18 @@ class TestEagleServerBase(CustomTestCase, MatchedStopMixin):
 
     def test_gsm8k(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
-            model=self.model,
-            eval_name="gsm8k",
-            num_examples=1000,
-            num_threads=128,
+            num_shots=5,
+            data_path=None,
+            num_questions=1000,
+            max_new_tokens=512,
+            parallel=128,
+            host="http://127.0.0.1",
+            port=int(self.base_url.split(":")[-1]),
         )
         metrics = run_eval(args)
         print(f"TestEagleLargeBS -- {metrics=}")
         self.assertGreater(
-            metrics["score"], 0.23
+            metrics["accuracy"], 0.23
         )  # 0.3333 for 60 questions; 0.234 for 1319 questions
         assert self.process.poll() is None
 
