@@ -64,7 +64,7 @@ class ModelConfig:
 MI35X_GLM5_MODELS = [
     # GLM-5 with NSA attention (TP=8)
     ModelConfig(
-        model_path="zai-org/GLM-5",
+        model_path="zai-org/GLM-5-FP8",
         tp_size=8,
         accuracy_threshold=0.93,
         timeout=5400,
