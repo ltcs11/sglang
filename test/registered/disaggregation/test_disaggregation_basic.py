@@ -361,7 +361,7 @@ class TestDisaggregationMooncakeSpec(PDDisaggregationServerBase):
             model=self.model,
             eval_name="gsm8k",
             num_examples=200,
-            num_threads=16,
+            num_threads=128,
         )
         metrics = run_eval(args)
         print(f"Evaluation metrics: {metrics}")
