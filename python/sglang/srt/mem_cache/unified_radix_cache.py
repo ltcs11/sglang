@@ -258,7 +258,7 @@ class UnifiedRadixCache(BasePrefixCache):
         tracker = {ct: 0 for ct in self.tree_components}
 
         for component in self.components.values():
-            component.drive_eviction(params, tracker)
+            component.drive_eviction(params=params, tracker=tracker)
 
         self.update_eviction_metrics(sum(tracker.values()), start_time)
         return EvictResult(
@@ -272,7 +272,7 @@ class UnifiedRadixCache(BasePrefixCache):
             return IncLockRefResult()
         result = IncLockRefResult()
         for component in self.components.values():
-            result = component.acquire_component_lock(node, result)
+            result = component.acquire_component_lock(node=node, result=result)
         return result
 
     def dec_lock_ref(
@@ -281,7 +281,8 @@ class UnifiedRadixCache(BasePrefixCache):
         if self.disable:
             return DecLockRefResult()
         for component in self.components.values():
-            component.release_component_lock(node, params)
+            component.release_component_lock(node=node, params=params)
+        # TODO: delta is not aggregated from components; no caller uses it yet.
         return DecLockRefResult()
 
     def cache_finished_req(self, req: Req, is_insert: bool = True) -> None:
@@ -311,7 +312,10 @@ class UnifiedRadixCache(BasePrefixCache):
             effective_cache_len = len(token_ids)
             for comp in self.components.values():
                 cl = comp.prepare_for_caching_req(
-                    req, insert_params, len(token_ids), True
+                    req=req,
+                    insert_params=insert_params,
+                    token_ids_len=len(token_ids),
+                    is_finished=True,
                 )
                 if cl is not None:
                     effective_cache_len = min(effective_cache_len, cl)
@@ -346,7 +350,9 @@ class UnifiedRadixCache(BasePrefixCache):
 
         # cleanup
         for comp in self.components.values():
-            comp.cleanup_after_caching_req(req, True, result, insert_params)
+            comp.cleanup_after_caching_req(
+                req, is_finished=True, insert_result=result, insert_params=insert_params
+            )
 
     def cache_unfinished_req(self, req: Req, chunked=False) -> None:
         token_ids = req.fill_ids
@@ -366,14 +372,21 @@ class UnifiedRadixCache(BasePrefixCache):
         insert_params = InsertParams(prev_prefix_len=req.cache_protected_len)
         effective_cache_len = len(token_ids)
         for comp in self.components.values():
-            cl = comp.prepare_for_caching_req(req, insert_params, len(token_ids), False)
+            cl = comp.prepare_for_caching_req(
+                req=req,
+                insert_params=insert_params,
+                token_ids_len=len(token_ids),
+                is_finished=False,
+            )
             if cl is not None:
                 effective_cache_len = min(effective_cache_len, cl)
 
         if effective_cache_len <= 0:
             req.prefix_indices = kv_indices_orig.to(dtype=torch.int64, copy=True)
             for comp in self.components.values():
-                comp.cleanup_after_caching_req(req, False, insert_params=insert_params)
+                comp.cleanup_after_caching_req(
+                    req, is_finished=False, insert_params=insert_params
+                )
             return
 
         kv_indices = kv_indices_orig[:effective_cache_len]
@@ -424,20 +437,22 @@ class UnifiedRadixCache(BasePrefixCache):
 
         # cleanup
         for comp in self.components.values():
-            comp.cleanup_after_caching_req(req, False, result, insert_params)
+            comp.cleanup_after_caching_req(
+                req,
+                is_finished=False,
+                insert_result=result,
+                insert_params=insert_params,
+            )
 
     # ---- Internal Helpers ----
-
-    def _for_each_component_lru(self, node: UnifiedTreeNode, lru_op):
-        for ct, component in self.components.items():
-            if component.node_has_component_data(node):
-                lru_op(self.lru_lists[ct], node)
 
     def _match_prefix_helper_readonly(
         self, key: RadixKey
     ) -> tuple[list[torch.Tensor], UnifiedTreeNode, int]:
         """Read-only version of _match_prefix_helper that does not split nodes.
-        Only considers fully matched nodes, ignores partial matches."""
+        Only considers fully matched nodes, ignores partial matches.
+
+        Not used yet; reserved for future read-only match operations."""
         node = self.root_node
         child_key = self.get_child_key_fn(key)
         value: list[torch.Tensor] = []
@@ -533,7 +548,10 @@ class UnifiedRadixCache(BasePrefixCache):
 
         for component in self.components.values():
             result = component.finalize_match_result(
-                result, params, value, best_value_len
+                result=result,
+                params=params,
+                value_chunks=value,
+                best_value_len=best_value_len,
             )
         return result
 
@@ -557,7 +575,7 @@ class UnifiedRadixCache(BasePrefixCache):
         )
 
         for component in self.components.values():
-            component.redistribute_on_node_split(new_node, child)
+            component.redistribute_on_node_split(new_parent=new_node, child=child)
         new_node.parent.children[self.get_child_key_fn(key)] = new_node
 
         self._for_each_component_lru(new_node, UnifiedLRUList.insert_mru)
@@ -607,13 +625,14 @@ class UnifiedRadixCache(BasePrefixCache):
 
             value_slice = value[:prefix_len]
             consumed_from = prefix_len
+            # Let each component claim ownership of overlapping KV slots
             for component in self.components.values():
                 comp_consumed_from = component.update_component_on_insert_overlap(
-                    node,
-                    prefix_len,
-                    total_prefix_length,
-                    value_slice,
-                    params,
+                    node=node,
+                    prefix_len=prefix_len,
+                    total_prefix_len=total_prefix_length,
+                    value_slice=value_slice,
+                    params=params,
                 )
                 consumed_from = min(consumed_from, comp_consumed_from)
 
@@ -630,9 +649,14 @@ class UnifiedRadixCache(BasePrefixCache):
                 child_key = self.get_child_key_fn(key)
 
         is_new_leaf = False
+        # Create new leaf for remaining suffix
         if len(key):
             if any(
-                comp.should_skip_leaf_creation(total_prefix_length, len(key), params)
+                comp.should_skip_leaf_creation(
+                    total_prefix_len=total_prefix_length,
+                    key_len=len(key),
+                    params=params,
+                )
                 for comp in self.components.values()
             ):
                 self.token_to_kv_pool_allocator.free(value)
@@ -642,12 +666,44 @@ class UnifiedRadixCache(BasePrefixCache):
         else:
             target_node = node
 
+        # Finalize: let each component attach its data to the target node.
+        # e.g. Mamba attaches mamba_value to the leaf node
         result = InsertResult(prefix_len=total_prefix_length)
         for component in self.components.values():
             component.commit_insert_component_data(
-                target_node, is_new_leaf, params, result
+                node=target_node,
+                is_new_leaf=is_new_leaf,
+                params=params,
+                result=result,
             )
         return result
+
+    def _cascade_evict(
+        self,
+        node: UnifiedTreeNode,
+        trigger: TreeComponent,
+        tracker: dict[ComponentType, int],
+    ):
+        """Cascade eviction from trigger to lower-or-equal priority components.
+
+        When a component evicts a node, all other components with equal or
+        lower eviction_priority on the same node are also evicted.
+        If the node is a leaf, it is removed from the tree and any
+        resulting tombstone ancestors are cleaned up recursively."""
+        is_leaf = len(node.children) == 0
+        trigger_priority = trigger.eviction_priority(is_leaf)
+
+        for comp in self.components.values():
+            if comp.eviction_priority(is_leaf) <= trigger_priority:
+                if comp is not trigger and comp.node_has_component_data(node):
+                    assert node.component(comp.component_type).lock_ref == 0
+                    self._evict_component_and_detach_lru(
+                        node, comp, is_leaf=is_leaf, tracker=tracker
+                    )
+
+        if is_leaf:
+            self._remove_leaf_from_parent(node)
+            self._iteratively_delete_tombstone_leaf(node, tracker)
 
     def _remove_leaf_from_parent(self, node: UnifiedTreeNode):
         key = self.get_child_key_fn(node.key)
@@ -667,27 +723,6 @@ class UnifiedRadixCache(BasePrefixCache):
         if lru.in_list(node):
             lru.remove_node(node)
         return freed
-
-    def _cascade_evict(
-        self,
-        node: UnifiedTreeNode,
-        trigger: TreeComponent,
-        tracker: dict[ComponentType, int],
-    ):
-        is_leaf = len(node.children) == 0
-        trigger_priority = trigger.eviction_priority(is_leaf)
-
-        for comp in self.components.values():
-            if comp.eviction_priority(is_leaf) <= trigger_priority:
-                if comp is not trigger and comp.node_has_component_data(node):
-                    assert node.component(comp.component_type).lock_ref == 0
-                    self._evict_component_and_detach_lru(
-                        node, comp, is_leaf=is_leaf, tracker=tracker
-                    )
-
-        if is_leaf:
-            self._remove_leaf_from_parent(node)
-            self._iteratively_delete_tombstone_leaf(node, tracker)
 
     def _iteratively_delete_tombstone_leaf(
         self, deleted_node: UnifiedTreeNode, tracker: dict[ComponentType, int]
@@ -718,7 +753,14 @@ class UnifiedRadixCache(BasePrefixCache):
             self._remove_leaf_from_parent(cur)
             cur = cur.parent
 
-    # ---- Query / Inspection Api ----
+    def _for_each_component_lru(self, node: UnifiedTreeNode, lru_op):
+        for ct, component in self.components.items():
+            if component.node_has_component_data(node):
+                lru_op(self.lru_lists[ct], node)
+
+    # ---- Query / Inspection APIs ----
+    # These APIs exist for compatibility with other RadixTree implementations.
+    # TODO: simplify and consolidate in a future refactor.
 
     @property
     def sliding_window_size(self):

@@ -280,6 +280,8 @@ class TreeComponent(ABC):
     ) -> None:
         """Post-cache cleanup for component-specific resources.
 
+        ``is_finished`` — whether the request has finished generation.
+        True means the request is complete and its resources can be released;
         ``insert_result`` is None when insert was skipped (cache disabled
         or effective_cache_len <= 0); treat as "no insert happened".
         ``insert_params`` is None only on the disabled path; on early-return
