@@ -44,6 +44,7 @@ class GSM8KMixin:
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=self.gsm8k_num_questions,
             num_threads=self.gsm8k_num_threads,
         )

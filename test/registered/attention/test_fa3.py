@@ -100,6 +100,7 @@ class BaseFlashAttentionTest(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=100,
             num_threads=128,
             num_shots=4,

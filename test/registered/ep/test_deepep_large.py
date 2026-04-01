@@ -70,6 +70,7 @@ class TestDeepseek(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=1200,
             num_threads=1200,
         )
@@ -136,6 +137,7 @@ class TestDeepseekMTP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=1200,
             num_threads=1200,
         )
@@ -194,6 +196,7 @@ class TestDeepseekV32TBO(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=1200,
             num_threads=1200,
         )

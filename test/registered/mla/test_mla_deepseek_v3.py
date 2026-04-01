@@ -48,6 +48,7 @@ class TestMLADeepseekV3(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -83,6 +84,7 @@ class TestMLADeepseekV3DisableFusedFunc(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -132,6 +134,7 @@ class TestMLADeepseekV3Fa3Fp8Kvcache(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -183,6 +186,7 @@ class TestDeepseekV3MTP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )

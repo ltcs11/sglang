@@ -55,6 +55,7 @@ class TestPureDP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -98,6 +99,7 @@ class TestHybridDPTP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -138,6 +140,7 @@ class TestTP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -185,6 +188,7 @@ class TestNoGatherdBuffer(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -235,6 +239,7 @@ class TestTBO(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -282,6 +287,7 @@ class TestTBOWithTPAttn(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -333,6 +339,7 @@ class TestTBOWithTPAttnAndDenseDP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -388,6 +395,7 @@ class TestMTP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -460,6 +468,7 @@ class TestMTPWithTBO(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -534,6 +543,7 @@ class TestMTPWithTPAttnAndTBO(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )

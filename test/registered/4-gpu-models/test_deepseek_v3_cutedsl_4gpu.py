@@ -75,6 +75,7 @@ class TestDeepseekR1Nvfp4CuteDSLDeepEP(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=512,
             num_threads=512,
         )
@@ -149,6 +150,7 @@ class TestDummyWithSBO(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=512,
             num_threads=512,
             num_shots=0,

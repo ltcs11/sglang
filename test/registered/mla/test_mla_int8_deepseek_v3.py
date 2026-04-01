@@ -51,6 +51,7 @@ class TestMLADeepseekV3ChannelInt8(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -105,6 +106,7 @@ class TestDeepseekV3MTPChannelInt8(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -154,6 +156,7 @@ class TestMLADeepseekV3BlockInt8(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -205,6 +208,7 @@ class TestDeepseekV3MTPBlockInt8(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )

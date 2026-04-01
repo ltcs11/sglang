@@ -62,6 +62,7 @@ class TestPPAccuracy(unittest.TestCase):
             base_url=self.base_url,
             model=DEFAULT_MODEL_NAME_FOR_TEST,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -169,6 +170,7 @@ class TestQwenVLPPAccuracy(unittest.TestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -221,6 +223,7 @@ class TestQwenPPAccuracy(unittest.TestCase):
                 base_url=self.base_url,
                 model=self.model_name,
                 eval_name="gsm8k",
+                api="completion",
                 num_examples=512,
                 num_threads=128,
             )
@@ -275,6 +278,7 @@ class TestQwenPPTieWeightsAccuracy(unittest.TestCase):
                 base_url=self.base_url,
                 model=self.model_name,
                 eval_name="gsm8k",
+                api="completion",
                 num_examples=512,
                 num_threads=128,
             )
@@ -325,6 +329,7 @@ class TestQwenMoePPAccuracy(unittest.TestCase):
                 base_url=self.base_url,
                 model=self.model_name,
                 eval_name="gsm8k",
+                api="completion",
                 num_examples=512,
                 num_threads=128,
             )
@@ -382,6 +387,7 @@ class TestQwen35PPAccuracy(unittest.TestCase):
                 base_url=self.base_url,
                 model=self.model_name,
                 eval_name="gsm8k",
+                api="completion",
                 num_examples=512,
                 num_threads=128,
             )

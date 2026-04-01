@@ -28,6 +28,7 @@ def test_gsm8k(base_url: str, model: str):
         base_url=base_url,
         model=model,
         eval_name="gsm8k",
+        api="completion",
         num_examples=200,
         num_threads=128,
     )

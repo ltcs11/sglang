@@ -52,6 +52,7 @@ class FlashinferTrtllmGenMoeBackendFP8Base:
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -98,6 +99,7 @@ class FlashinferTrtllmGenMoeBackendBF16Base:
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )
@@ -143,6 +145,7 @@ class FlashinferTrtllmGenMoeBackendMXFP8Base:
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=200,
             num_threads=128,
         )

@@ -54,6 +54,7 @@ class TestFlashinferTrtllmGenMoeBackend(CustomTestCase):
             base_url=self.base_url,
             model=self.model,
             eval_name="gsm8k",
+            api="completion",
             num_examples=1319,
             num_threads=1319,
             num_shots=8,
