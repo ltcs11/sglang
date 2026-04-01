@@ -50,7 +50,7 @@ class LMEvalMixin:
     def test_lm_eval(self):
         """Run lm-eval evaluation and validate results."""
         # Flush cache before evaluation
-        requests.get(self.base_url + "/flush_cache", timeout=10)
+        requests.get(self.base_url + "/flush_cache")
 
         eval_config = yaml.safe_load(
             Path(self.model_config_name).read_text(encoding="utf-8")
