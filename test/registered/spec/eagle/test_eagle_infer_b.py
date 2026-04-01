@@ -52,6 +52,7 @@ class TestEAGLEServerBasic(EagleServerBase):
             model=self.target_model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -106,9 +107,9 @@ class TestEAGLEServerAdditional(TestEAGLEServerBasic):
             model=self.target_model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=1,
             num_examples=200,
             num_threads=128,
-            max_tokens=1,
         )
 
         metrics = run_eval(args)

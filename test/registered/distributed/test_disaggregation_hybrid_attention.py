@@ -78,6 +78,7 @@ class TestDisaggregationHybridAttentionMamba(PDDisaggregationServerBase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -153,6 +154,7 @@ class TestDisaggregationHybridAttentionMambaExtraBuffer(PDDisaggregationServerBa
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -231,6 +233,7 @@ class TestDisaggregationHybridAttentionMambaDPDecode(PDDisaggregationServerBase)
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )

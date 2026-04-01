@@ -33,6 +33,7 @@ class TestTorchFlexAttnBackend(CustomTestCase):
                 base_url=base_url,
                 eval_name="gsm8k",
                 api="completion",
+                max_tokens=512,
                 num_examples=100,
                 num_threads=10,
                 num_shots=8,

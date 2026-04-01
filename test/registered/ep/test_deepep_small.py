@@ -56,6 +56,7 @@ class TestPureDP(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -100,6 +101,7 @@ class TestHybridDPTP(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -141,6 +143,7 @@ class TestTP(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -189,6 +192,7 @@ class TestNoGatherdBuffer(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -240,6 +244,7 @@ class TestTBO(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -288,6 +293,7 @@ class TestTBOWithTPAttn(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -340,6 +346,7 @@ class TestTBOWithTPAttnAndDenseDP(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -396,6 +403,7 @@ class TestMTP(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -469,6 +477,7 @@ class TestMTPWithTBO(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -544,6 +553,7 @@ class TestMTPWithTPAttnAndTBO(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )

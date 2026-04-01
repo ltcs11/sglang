@@ -185,6 +185,7 @@ class CompletionSampler(SamplerBase):
         temperature: float = 0.0,
         top_p: float = 1.0,
         max_tokens: int = 2048,
+        stop: Optional[List[str]] = None,
     ):
         self.client = OpenAI(base_url=base_url, http_client=LargerHttpxClient())
 
@@ -195,9 +196,10 @@ class CompletionSampler(SamplerBase):
         self.temperature = temperature
         self.top_p = top_p
         self.max_tokens = max_tokens
+        self.stop = stop
         self._completion_tokens: list[int] = []
         print(
-            f"CompletionSampler initialized with {self.model=} {self.temperature=} {self.max_tokens=}"
+            f"CompletionSampler initialized with {self.model=} {self.temperature=} {self.max_tokens=} {self.stop=}"
         )
 
     def _pack_message(self, role: str, content: Any):
@@ -219,19 +221,31 @@ class CompletionSampler(SamplerBase):
                     temperature=self.temperature,
                     top_p=self.top_p,
                     max_tokens=self.max_tokens,
+                    stop=self.stop,
                 )
                 if response.usage and response.usage.completion_tokens is not None:
                     self._completion_tokens.append(response.usage.completion_tokens)
-                return response.choices[0].text or ""
+                result = response.choices[0].text or ""
+                if trial == 0 and len(self._completion_tokens) <= 3:
+                    print(f"[DEBUG CompletionSampler] prompt[:200]={prompt[:200]!r}")
+                    print(f"[DEBUG CompletionSampler] response[:200]={result[:200]!r}")
+                    print(
+                        f"[DEBUG CompletionSampler] finish_reason={response.choices[0].finish_reason}"
+                    )
+                    print(
+                        f"[DEBUG CompletionSampler] completion_tokens={response.usage.completion_tokens if response.usage else 'N/A'}"
+                    )
+                return result
             except openai.BadRequestError as e:
-                print("Bad Request Error", e)
+                print(f"[DEBUG CompletionSampler] BadRequestError: {e}")
                 return ""
             except Exception as e:
                 exception_backoff = 2**trial
                 print(
-                    f"Rate limit exception so wait and retry {trial} after {exception_backoff} sec",
-                    e,
+                    f"[DEBUG CompletionSampler] retry {trial}, error type={type(e).__name__}, error={e}",
                 )
+                if trial == 0:
+                    print(f"[DEBUG CompletionSampler] prompt[:100]={prompt[:100]!r}")
                 time.sleep(exception_backoff)
                 trial += 1
         print(f"All retry attempts exhausted for request. Returning empty response.")

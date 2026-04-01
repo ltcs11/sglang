@@ -51,6 +51,7 @@ class FP4GemmBase:
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=1319,
             num_threads=200,
         )

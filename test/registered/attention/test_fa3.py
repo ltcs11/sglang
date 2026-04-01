@@ -101,6 +101,7 @@ class BaseFlashAttentionTest(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=100,
             num_threads=128,
             num_shots=4,

@@ -45,6 +45,7 @@ class TestDeepseekV3W4afp8(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=1200,
             num_threads=1200,
         )
@@ -98,6 +99,7 @@ class TestDeepseekV3W4Afp8Mtp(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -165,6 +167,7 @@ class TestDeepseekV3W4Afp8DeepepNormal(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -232,6 +235,7 @@ class TestDeepseekV3W4Afp8DeepepAutoMtp(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )

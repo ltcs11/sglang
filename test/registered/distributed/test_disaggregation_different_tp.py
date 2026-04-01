@@ -83,6 +83,7 @@ class TestDisaggregationMooncakePrefillLargerTP(PDDisaggregationServerBase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -157,6 +158,7 @@ class TestDisaggregationMooncakeDecodeLargerTP(PDDisaggregationServerBase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -231,6 +233,7 @@ class TestDisaggregationMooncakeMHAPrefillLargerTP(PDDisaggregationServerBase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -305,6 +308,7 @@ class TestDisaggregationMooncakeMHADecodeLargerTP(PDDisaggregationServerBase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )

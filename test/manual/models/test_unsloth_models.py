@@ -33,6 +33,7 @@ class TestUnslothPhi4(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -66,6 +67,7 @@ class TestUnslothPhi4Bnb4bit(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -99,6 +101,7 @@ class TestUnslothPhi4UnslothBnb4bit(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -129,6 +132,7 @@ class TestUnslothPhi4MiniInstruct(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -162,6 +166,7 @@ class TestUnslothPhi4MiniBnb4bit(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )
@@ -195,6 +200,7 @@ class TestUnslothPhi4MiniUnslothBnb4bit(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
+            max_tokens=512,
             num_examples=200,
             num_threads=128,
         )

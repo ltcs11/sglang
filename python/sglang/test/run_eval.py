@@ -71,7 +71,12 @@ def run_eval_once(args, base_url: str, eval_obj: Eval) -> dict:
 
     api_mode = getattr(args, "api", "chat")
     if api_mode == "completion":
-        sampler = CompletionSampler(**common_kwargs)
+        # Default stop tokens for completion API (matches few_shot_gsm8k behavior)
+        stop = getattr(args, "stop", ["Question", "Assistant:", "<|separator|>"])
+        sampler = CompletionSampler(
+            **common_kwargs,
+            stop=stop,
+        )
     else:
         sampler = ChatCompletionSampler(
             **common_kwargs,
