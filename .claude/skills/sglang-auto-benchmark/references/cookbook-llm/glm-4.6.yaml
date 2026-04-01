@@ -69,7 +69,7 @@ benchmark:
     max_tpot_ms: 30
   output_dir: ./auto_benchmark_results/cookbook-llm/glm-4.6
 search:
-  tier: 3
+  tier: 2
   max_candidates: 24
 speculative:
   enabled: false

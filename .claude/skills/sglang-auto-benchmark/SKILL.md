@@ -158,20 +158,27 @@ python3 -m sglang.auto_benchmark validate \
 `search.tier` controls search breadth.
 
 - Tier 1
-  - Fast sanity sweep.
-  - Baseline plus a small one-at-a-time scan.
+  - Fastest and smallest sweep.
+  - Best for smoke tests, config validation, and quickly checking whether a model can run at all.
+  - Uses a very small subset of the search space and mainly does one-at-a-time changes on top of the baseline.
+  - Lowest search cost, but also the easiest to miss a better configuration.
 - Tier 2
-  - Middle ground.
-  - Small cartesian search on the first few high-priority keys plus one-at-a-time expansion for the rest.
+  - Recommended default.
+  - Good balance between coverage and runtime.
+  - Runs a small cartesian search on the first few high-priority keys, then expands the rest one at a time.
+  - Usually the right choice for everyday tuning when you want meaningful search without waiting too long.
 - Tier 3
-  - Largest search.
-  - Full cartesian product of the provided search space.
-  - Slowest, but best when the search space is intentionally bounded.
-  - This is the default used by the reference configs.
+  - Largest search space.
+  - Runs the full cartesian product of the provided search space.
+  - Search time is the longest by far.
+  - Only use it when the search space is already tightly bounded and you intentionally want the most exhaustive sweep.
+  - This is the best chance of finding the strongest config, but it is also the easiest way to turn a benchmark into a multi-hour or multi-day run.
 
 `search.max_candidates` still applies at all tiers, including tier 3.
 When it is set together with tier 3, the workflow still enumerates the full cartesian order conceptually, but only keeps the first `max_candidates` unique candidates after deduplication.
 That makes it useful as a safety valve, but it also means tier 3 is no longer truly exhaustive unless you remove the cap or raise it high enough.
+
+The reference configs now default to tier 2.
 
 YAML key order matters. Put the most important search keys first.
 

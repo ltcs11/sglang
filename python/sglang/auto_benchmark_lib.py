@@ -10,9 +10,10 @@ import sys
 import time
 from copy import deepcopy
 from types import SimpleNamespace
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import yaml
+from tqdm.auto import tqdm
 
 from sglang.benchmark.datasets import get_dataset
 from sglang.benchmark.datasets.autobench import (
@@ -36,6 +37,58 @@ FLAG_ALIASES = {
 }
 
 OOM_HINT = "Candidate likely OOMed. Increase GPU count or use GPUs with larger memory."
+PROGRESS_FLAG_KEYS = (
+    "tp_size",
+    "dp_size",
+    "ep_size",
+    "pp_size",
+    "prefill_attention_backend",
+    "decode_attention_backend",
+    "attention_backend",
+    "sampling_backend",
+    "grammar_backend",
+    "mem_fraction_static",
+    "chunked_prefill_size",
+    "prefill_max_requests",
+    "max_prefill_tokens",
+    "max_running_requests",
+    "max_queued_requests",
+    "schedule_policy",
+    "schedule_conservativeness",
+    "num_continuous_decode_steps",
+    "stream_interval",
+    "page_size",
+    "cuda_graph_max_bs",
+    "speculative_num_steps",
+    "speculative_eagle_topk",
+    "speculative_num_draft_tokens",
+)
+PROGRESS_FLAG_ALIASES = {
+    "tp_size": "tp",
+    "dp_size": "dp",
+    "ep_size": "ep",
+    "pp_size": "pp",
+    "prefill_attention_backend": "prefill",
+    "decode_attention_backend": "decode",
+    "attention_backend": "attn",
+    "sampling_backend": "sampling",
+    "grammar_backend": "grammar",
+    "mem_fraction_static": "mfs",
+    "chunked_prefill_size": "chunk",
+    "prefill_max_requests": "prefill_req",
+    "max_prefill_tokens": "prefill_tok",
+    "max_running_requests": "mrr",
+    "max_queued_requests": "mqr",
+    "schedule_policy": "sched",
+    "schedule_conservativeness": "sched_cons",
+    "num_continuous_decode_steps": "decode_steps",
+    "stream_interval": "stream",
+    "page_size": "page",
+    "cuda_graph_max_bs": "cg_bs",
+    "speculative_num_steps": "spec_steps",
+    "speculative_eagle_topk": "eagle_topk",
+    "speculative_num_draft_tokens": "draft_tok",
+}
 
 
 def load_yaml(path: str) -> Dict[str, Any]:
@@ -68,6 +121,201 @@ def flatten(data: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
         else:
             flat[name] = value
     return flat
+
+
+def log_line(message: str) -> None:
+    tqdm.write(message)
+
+
+def describe_search_tier(tier: int) -> str:
+    descriptions = {
+        1: "tier 1: smallest and fastest sanity sweep",
+        2: "tier 2: balanced default sweep",
+        3: "tier 3: largest and slowest full search",
+    }
+    return descriptions.get(tier, f"tier {tier}")
+
+
+def estimate_binary_search_trials(lower: float, upper: float, tolerance: float) -> int:
+    if upper <= lower or tolerance <= 0:
+        return 1
+
+    trials = 0
+    lo, hi = float(lower), float(upper)
+    while hi - lo > tolerance:
+        qps = round((lo + hi) / 2, 4)
+        if qps <= lo or qps >= hi:
+            break
+        hi = qps
+        trials += 1
+    return max(trials, 1)
+
+
+def estimate_trials_per_candidate(benchmark_cfg: Dict[str, Any]) -> int:
+    mode, values, tolerance = build_qps_plan(benchmark_cfg)
+    max_concurrency_values = as_list(benchmark_cfg.get("max_concurrency", [None]))
+    if mode == "fixed":
+        per_concurrency = len(values)
+    else:
+        per_concurrency = estimate_binary_search_trials(values[0], values[1], tolerance)
+    return max(1, per_concurrency) * len(max_concurrency_values)
+
+
+def describe_qps_plan(benchmark_cfg: Dict[str, Any]) -> str:
+    mode, values, tolerance = build_qps_plan(benchmark_cfg)
+    if mode == "fixed":
+        return f"fixed qps values={values}"
+    return (
+        f"binary search qps lower={values[0]} upper={values[1]} "
+        f"tolerance={tolerance} estimated_trials_per_max_concurrency="
+        f"{estimate_binary_search_trials(values[0], values[1], tolerance)}"
+    )
+
+
+def scenario_plan_text(scenario: Dict[str, Any]) -> str:
+    cfg = scenario["cfg"]
+    parts = [f"kind={cfg['kind']}", f"num_prompts={cfg.get('num_prompts', '')}"]
+    if cfg["kind"] == "random":
+        parts.append(f"input_len={cfg['random_input_len']}")
+        parts.append(f"output_len={cfg['random_output_len']}")
+    elif cfg.get("path"):
+        parts.append(f"path={cfg['path']}")
+    return ", ".join(str(part) for part in parts if part != "")
+
+
+def print_run_plan(
+    config_path: str,
+    output_dir: str,
+    tier: int,
+    max_candidates: Optional[int],
+    benchmark_cfg: Dict[str, Any],
+    scenarios: Sequence[Dict[str, Any]],
+    server_cfg: Dict[str, Any],
+    base_candidates: Sequence[Dict[str, Any]],
+    speculative_enabled: bool,
+) -> None:
+    estimated_base_trials = (
+        len(scenarios)
+        * len(base_candidates)
+        * estimate_trials_per_candidate(benchmark_cfg)
+    )
+    log_line("=== Auto Benchmark Plan ===")
+    log_line(f"config={config_path}")
+    log_line(f"output_dir={output_dir}")
+    log_line(f"search.tier={tier} ({describe_search_tier(tier)})")
+    log_line(
+        "search.max_candidates="
+        f"{max_candidates if max_candidates is not None else 'unbounded'}"
+    )
+    log_line(f"qps_plan={describe_qps_plan(benchmark_cfg)}")
+    log_line(
+        "max_concurrency="
+        f"{json.dumps(as_list(benchmark_cfg.get('max_concurrency', [None])), ensure_ascii=False)}"
+    )
+    log_line(f"estimated_base_trials={estimated_base_trials}")
+    log_line("Planned scenarios:")
+    for index, scenario in enumerate(scenarios, start=1):
+        log_line(
+            f"  [{index}/{len(scenarios)}] {scenario['display_name']}: "
+            f"{scenario_plan_text(scenario)}"
+        )
+    log_line("Planned base candidates:")
+    for index, candidate in enumerate(base_candidates, start=1):
+        rendered = merge_host_port(server_cfg, candidate)
+        log_line(
+            f"  [{index}/{len(base_candidates)}] {json.dumps(rendered, ensure_ascii=False)}"
+        )
+    if speculative_enabled:
+        log_line(
+            "Speculative stage is enabled. Its candidate list will be printed after "
+            "the best base configuration is known."
+        )
+
+
+def estimated_finish_time(
+    start_time: float, completed: int, total: Optional[int]
+) -> str:
+    if not total or completed <= 0:
+        return "?"
+    remaining_seconds = max(
+        0.0, (time.time() - start_time) * (total - completed) / completed
+    )
+    return time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(time.time() + remaining_seconds)
+    )
+
+
+def summarize_progress_flags(server_flags: Dict[str, Any], limit: int = 6) -> str:
+    parts = []
+    for key in PROGRESS_FLAG_KEYS:
+        if key not in server_flags:
+            continue
+        value = server_flags[key]
+        if value in (None, "", False):
+            continue
+        alias = PROGRESS_FLAG_ALIASES.get(key, key)
+        parts.append(f"{alias}={value}")
+        if len(parts) >= limit:
+            break
+    if not parts and server_flags.get("candidate_id") is not None:
+        return f"candidate={server_flags['candidate_id']}"
+    return ",".join(parts)
+
+
+def format_best_progress(record: Optional[Dict[str, Any]]) -> str:
+    if not record or not record.get("metrics"):
+        return "best pending"
+
+    metrics = record["metrics"]
+    flags = dict(record.get("server_flags", {}))
+    flags["candidate_id"] = record.get("candidate_id")
+    return (
+        "best "
+        f"qps={record.get('requested_qps', 0.0):.4f} "
+        f"tok/s={metrics.get('output_throughput', 0.0):.1f} "
+        f"ttft={metrics.get('mean_ttft_ms', 0.0):.1f}ms "
+        f"tpot={metrics.get('mean_tpot_ms', 0.0):.1f}ms "
+        f"cfg[{summarize_progress_flags(flags)}]"
+    )
+
+
+def refresh_progress_eta(
+    pbar: tqdm, start_time: float, best_record: Optional[Dict[str, Any]] = None
+) -> None:
+    pbar.set_postfix_str(
+        f"finish {estimated_finish_time(start_time, int(pbar.n), pbar.total)} | "
+        f"{format_best_progress(best_record)}",
+        refresh=False,
+    )
+
+
+def make_progress_bar(
+    desc: str, total: int, position: int, leave: bool
+) -> Tuple[tqdm, float]:
+    start_time = time.time()
+    pbar = tqdm(
+        total=total,
+        desc=desc,
+        dynamic_ncols=True,
+        mininterval=1.0,
+        position=position,
+        leave=leave,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}",
+    )
+    refresh_progress_eta(pbar, start_time)
+    return pbar, start_time
+
+
+def advance_progress(
+    pbar: tqdm,
+    start_time: float,
+    count: int = 1,
+    best_record: Optional[Dict[str, Any]] = None,
+) -> None:
+    if pbar.total is not None and pbar.n + count > pbar.total:
+        pbar.total = pbar.n + count
+    pbar.update(count)
+    refresh_progress_eta(pbar, start_time, best_record)
 
 
 def tail_text(path: str, limit: int = 4000) -> str:
@@ -747,6 +995,7 @@ def run_candidate(
     tokenizer_path: str,
     server_flags: Dict[str, Any],
     output_dir: str,
+    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> List[Dict[str, Any]]:
     mode, values, tolerance = build_qps_plan(benchmark_cfg)
     max_concurrency_values = as_list(benchmark_cfg.get("max_concurrency", [None]))
@@ -772,7 +1021,11 @@ def run_candidate(
 
     for max_concurrency in max_concurrency_values:
         if mode == "fixed":
-            records.extend(one_trial(qps, max_concurrency) for qps in values)
+            for qps in values:
+                record = one_trial(qps, max_concurrency)
+                records.append(record)
+                if progress_callback is not None:
+                    progress_callback(record)
             continue
 
         lower, upper = values
@@ -781,6 +1034,8 @@ def run_candidate(
             qps = round((lower + upper) / 2, 4)
             record = one_trial(qps, max_concurrency)
             records.append(record)
+            if progress_callback is not None:
+                progress_callback(record)
             if record.get("metrics") and record["sla_passed"]:
                 lower = qps
                 best = record
@@ -904,6 +1159,7 @@ def write_markdown_summary(
 
 
 def run_stage(
+    scenario_name: str,
     stage_name: str,
     candidates: Sequence[Dict[str, Any]],
     server_cfg: Dict[str, Any],
@@ -916,34 +1172,66 @@ def run_stage(
 ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
     records: List[Dict[str, Any]] = []
     best_record: Optional[Dict[str, Any]] = None
+    stage_label = f"{scenario_name} {stage_name}"
+    candidate_pbar, candidate_started_at = make_progress_bar(
+        desc=f"{stage_label} candidates",
+        total=len(candidates),
+        position=1,
+        leave=True,
+    )
+    trial_pbar, trial_started_at = make_progress_bar(
+        desc=f"{stage_label} trials",
+        total=len(candidates) * estimate_trials_per_candidate(benchmark_cfg),
+        position=2,
+        leave=False,
+    )
+    try:
+        for candidate_id, candidate_flags in enumerate(candidates):
+            merged = merge_host_port(server_cfg, candidate_flags)
+            log_line(
+                f"[{stage_name}] scenario={scenario_name} "
+                f"candidate {candidate_id + 1}/{len(candidates)}: "
+                f"{json.dumps(merged, ensure_ascii=False)}"
+            )
 
-    for candidate_id, candidate_flags in enumerate(candidates):
-        merged = merge_host_port(server_cfg, candidate_flags)
-        print(
-            f"[{stage_name}] candidate {candidate_id + 1}/{len(candidates)}: "
-            f"{json.dumps(merged, ensure_ascii=False)}"
-        )
-        candidate_records = run_candidate(
-            stage_name=stage_name,
-            candidate_id=candidate_id,
-            server_cfg=server_cfg,
-            benchmark_cfg=benchmark_cfg,
-            dataset_summary=dataset_summary,
-            backend=backend,
-            dataset_path=dataset_path,
-            tokenizer_path=tokenizer_path,
-            server_flags=merged,
-            output_dir=output_dir,
-        )
-        records.extend(candidate_records)
+            def on_trial(record: Dict[str, Any]) -> None:
+                nonlocal best_record
+                if record.get("metrics") and (
+                    best_record is None
+                    or result_sort_key(record) > result_sort_key(best_record)
+                ):
+                    best_record = record
+                advance_progress(trial_pbar, trial_started_at, best_record=best_record)
+                refresh_progress_eta(
+                    candidate_pbar, candidate_started_at, best_record=best_record
+                )
 
-        for record in candidate_records:
-            if not record.get("metrics"):
-                continue
-            if best_record is None or result_sort_key(record) > result_sort_key(
-                best_record
-            ):
-                best_record = record
+            candidate_records = run_candidate(
+                stage_name=stage_name,
+                candidate_id=candidate_id,
+                server_cfg=server_cfg,
+                benchmark_cfg=benchmark_cfg,
+                dataset_summary=dataset_summary,
+                backend=backend,
+                dataset_path=dataset_path,
+                tokenizer_path=tokenizer_path,
+                server_flags=merged,
+                output_dir=output_dir,
+                progress_callback=on_trial,
+            )
+            records.extend(candidate_records)
+
+            advance_progress(
+                candidate_pbar,
+                candidate_started_at,
+                best_record=best_record,
+            )
+    finally:
+        if trial_pbar.total is not None and trial_pbar.n < trial_pbar.total:
+            trial_pbar.total = trial_pbar.n
+            refresh_progress_eta(trial_pbar, trial_started_at, best_record)
+        candidate_pbar.close()
+        trial_pbar.close()
 
     return records, best_record
 
@@ -973,68 +1261,54 @@ def run_auto_benchmark(config_path: str) -> str:
 
     dataset_cfg = normalize_dataset_cfg(config.get("dataset"), benchmark_cfg)
     scenarios = expand_dataset_scenarios(dataset_cfg)
-    tier = int(search_cfg.get("tier", 3))
+    tier = int(search_cfg.get("tier", 2))
     max_candidates = search_cfg.get("max_candidates")
     base_candidates = build_server_candidates(server_cfg, tier, max_candidates)
     scenario_records: List[Dict[str, Any]] = []
+    print_run_plan(
+        config_path=config_path,
+        output_dir=output_dir,
+        tier=tier,
+        max_candidates=max_candidates,
+        benchmark_cfg=benchmark_cfg,
+        scenarios=scenarios,
+        server_cfg=server_cfg,
+        base_candidates=base_candidates,
+        speculative_enabled=bool(config.get("speculative", {}).get("enabled")),
+    )
 
-    for scenario in scenarios:
-        scenario_output_dir = (
-            output_dir
-            if len(scenarios) == 1
-            else os.path.join(output_dir, scenario["name"])
-        )
-        os.makedirs(scenario_output_dir, exist_ok=True)
-        prepared_dataset_path, rows, dataset_summary = prepare_dataset(
-            dataset_cfg=scenario["cfg"],
-            tokenizer_path=tokenizer_path,
-            model=model,
-            output_path=os.path.join(scenario_output_dir, "prepared_dataset.jsonl"),
-        )
-        backend = infer_backend(benchmark_cfg.get("backend", "auto"), rows)
-        print(f"scenario={scenario['display_name']}")
-        print(f"prepared_dataset={prepared_dataset_path}")
-        print(f"dataset_summary={json.dumps(dataset_summary, ensure_ascii=False)}")
-        print(f"selected_backend={backend}")
-
-        all_records, best_base = run_stage(
-            stage_name="base",
-            candidates=base_candidates,
-            server_cfg=server_cfg,
-            benchmark_cfg=benchmark_cfg,
-            dataset_summary=dataset_summary,
-            backend=backend,
-            dataset_path=prepared_dataset_path,
-            tokenizer_path=tokenizer_path,
-            output_dir=scenario_output_dir,
-        )
-
-        speculative_cfg = config.get("speculative", {})
-        if speculative_cfg.get("enabled"):
-            if best_base is None:
-                raise ValueError(
-                    "Speculative search requires at least one successful base run."
-                )
-            if not speculative_cfg.get("draft_model_path"):
-                raise ValueError("speculative.draft_model_path is required.")
-
-            spec_base_flags = deepcopy(best_base["server_flags"])
-            spec_base_flags.update(deepcopy(speculative_cfg.get("base_flags", {})))
-            spec_base_flags["speculative_algorithm"] = speculative_cfg.get(
-                "algorithm", "EAGLE"
+    scenario_pbar, scenario_started_at = make_progress_bar(
+        desc="scenarios",
+        total=len(scenarios),
+        position=0,
+        leave=True,
+    )
+    try:
+        for scenario in scenarios:
+            scenario_output_dir = (
+                output_dir
+                if len(scenarios) == 1
+                else os.path.join(output_dir, scenario["name"])
             )
-            spec_base_flags["speculative_draft_model_path"] = speculative_cfg[
-                "draft_model_path"
-            ]
-            spec_candidates = build_candidates(
-                base_flags=canonicalize_flags(spec_base_flags),
-                search_space=deepcopy(speculative_cfg.get("search_space", {})),
-                tier=tier,
-                max_candidates=max_candidates,
+            os.makedirs(scenario_output_dir, exist_ok=True)
+            prepared_dataset_path, rows, dataset_summary = prepare_dataset(
+                dataset_cfg=scenario["cfg"],
+                tokenizer_path=tokenizer_path,
+                model=model,
+                output_path=os.path.join(scenario_output_dir, "prepared_dataset.jsonl"),
             )
-            spec_records, _ = run_stage(
-                stage_name="speculative",
-                candidates=spec_candidates,
+            backend = infer_backend(benchmark_cfg.get("backend", "auto"), rows)
+            log_line(f"scenario={scenario['display_name']}")
+            log_line(f"prepared_dataset={prepared_dataset_path}")
+            log_line(
+                f"dataset_summary={json.dumps(dataset_summary, ensure_ascii=False)}"
+            )
+            log_line(f"selected_backend={backend}")
+
+            all_records, best_base = run_stage(
+                scenario_name=scenario["display_name"],
+                stage_name="base",
+                candidates=base_candidates,
                 server_cfg=server_cfg,
                 benchmark_cfg=benchmark_cfg,
                 dataset_summary=dataset_summary,
@@ -1043,30 +1317,77 @@ def run_auto_benchmark(config_path: str) -> str:
                 tokenizer_path=tokenizer_path,
                 output_dir=scenario_output_dir,
             )
-            all_records.extend(spec_records)
 
-        results_jsonl = os.path.join(scenario_output_dir, "results.jsonl")
-        results_csv = os.path.join(scenario_output_dir, "results.csv")
-        write_jsonl(results_jsonl, all_records)
-        write_csv(results_csv, all_records)
-        write_markdown_summary(
-            path=os.path.join(scenario_output_dir, "summary.md"),
-            scenario=scenario,
-            dataset_cfg=scenario["cfg"],
-            dataset_summary=dataset_summary,
-            records=all_records,
-            best=best_record(all_records),
-            server_cfg=server_cfg,
-        )
-        scenario_records.append(
-            {
-                "scenario_name": scenario["display_name"],
-                "scenario_dir": scenario_output_dir,
-                "best_record": best_record(all_records),
-            }
-        )
-        print(f"results_jsonl={results_jsonl}")
-        print(f"results_csv={results_csv}")
+            speculative_cfg = config.get("speculative", {})
+            if speculative_cfg.get("enabled"):
+                if best_base is None:
+                    raise ValueError(
+                        "Speculative search requires at least one successful base run."
+                    )
+                if not speculative_cfg.get("draft_model_path"):
+                    raise ValueError("speculative.draft_model_path is required.")
+
+                spec_base_flags = deepcopy(best_base["server_flags"])
+                spec_base_flags.update(deepcopy(speculative_cfg.get("base_flags", {})))
+                spec_base_flags["speculative_algorithm"] = speculative_cfg.get(
+                    "algorithm", "EAGLE"
+                )
+                spec_base_flags["speculative_draft_model_path"] = speculative_cfg[
+                    "draft_model_path"
+                ]
+                spec_candidates = build_candidates(
+                    base_flags=canonicalize_flags(spec_base_flags),
+                    search_space=deepcopy(speculative_cfg.get("search_space", {})),
+                    tier=tier,
+                    max_candidates=max_candidates,
+                )
+                log_line(
+                    f"Planned speculative candidates for scenario={scenario['display_name']}:"
+                )
+                for index, candidate in enumerate(spec_candidates, start=1):
+                    log_line(
+                        f"  [{index}/{len(spec_candidates)}] "
+                        f"{json.dumps(merge_host_port(server_cfg, candidate), ensure_ascii=False)}"
+                    )
+                spec_records, _ = run_stage(
+                    scenario_name=scenario["display_name"],
+                    stage_name="speculative",
+                    candidates=spec_candidates,
+                    server_cfg=server_cfg,
+                    benchmark_cfg=benchmark_cfg,
+                    dataset_summary=dataset_summary,
+                    backend=backend,
+                    dataset_path=prepared_dataset_path,
+                    tokenizer_path=tokenizer_path,
+                    output_dir=scenario_output_dir,
+                )
+                all_records.extend(spec_records)
+
+            results_jsonl = os.path.join(scenario_output_dir, "results.jsonl")
+            results_csv = os.path.join(scenario_output_dir, "results.csv")
+            write_jsonl(results_jsonl, all_records)
+            write_csv(results_csv, all_records)
+            write_markdown_summary(
+                path=os.path.join(scenario_output_dir, "summary.md"),
+                scenario=scenario,
+                dataset_cfg=scenario["cfg"],
+                dataset_summary=dataset_summary,
+                records=all_records,
+                best=best_record(all_records),
+                server_cfg=server_cfg,
+            )
+            scenario_records.append(
+                {
+                    "scenario_name": scenario["display_name"],
+                    "scenario_dir": scenario_output_dir,
+                    "best_record": best_record(all_records),
+                }
+            )
+            log_line(f"results_jsonl={results_jsonl}")
+            log_line(f"results_csv={results_csv}")
+            advance_progress(scenario_pbar, scenario_started_at)
+    finally:
+        scenario_pbar.close()
 
     if len(scenarios) > 1:
         summary_rows = []

@@ -17,7 +17,10 @@ from sglang.auto_benchmark_lib import (
     build_candidates,
     build_server_candidates,
     classify_failure,
+    describe_search_tier,
+    estimate_trials_per_candidate,
     expand_dataset_scenarios,
+    format_best_progress,
     infer_backend,
     prepare_dataset,
 )
@@ -222,6 +225,42 @@ class TestAutoBenchmarkTools(CustomTestCase):
         self.assertEqual(scenarios[0]["cfg"]["random_input_len"], 1000)
         self.assertEqual(scenarios[1]["cfg"]["random_input_len"], 8000)
         self.assertEqual(scenarios[1]["cfg"]["random_output_len"], 1000)
+
+    def test_estimate_trials_and_tier_descriptions(self):
+        benchmark_cfg = {
+            "qps": {"lower": 0.25, "upper": 4.0, "tolerance": 0.1},
+            "max_concurrency": [None, 8, 16],
+        }
+
+        self.assertEqual(estimate_trials_per_candidate(benchmark_cfg), 18)
+        self.assertIn("default", describe_search_tier(2))
+        self.assertIn("slowest", describe_search_tier(3))
+
+    def test_format_best_progress(self):
+        text = format_best_progress(
+            {
+                "candidate_id": 3,
+                "requested_qps": 3.5,
+                "server_flags": {
+                    "tp_size": 4,
+                    "ep_size": 4,
+                    "mem_fraction_static": 0.84,
+                    "max_running_requests": 96,
+                },
+                "metrics": {
+                    "output_throughput": 1234.56,
+                    "mean_ttft_ms": 250.12,
+                    "mean_tpot_ms": 14.78,
+                },
+            }
+        )
+
+        self.assertIn("qps=3.5000", text)
+        self.assertIn("tok/s=1234.6", text)
+        self.assertIn("ttft=250.1ms", text)
+        self.assertIn("tpot=14.8ms", text)
+        self.assertIn("tp=4", text)
+        self.assertIn("ep=4", text)
 
 
 if __name__ == "__main__":

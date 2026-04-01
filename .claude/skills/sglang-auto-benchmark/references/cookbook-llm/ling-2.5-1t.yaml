@@ -77,7 +77,7 @@ benchmark:
     max_tpot_ms: 30
   output_dir: ./auto_benchmark_results/cookbook-llm/ling-2.5-1t
 search:
-  tier: 3
+  tier: 2
   max_candidates: 24
 speculative:
   enabled: false

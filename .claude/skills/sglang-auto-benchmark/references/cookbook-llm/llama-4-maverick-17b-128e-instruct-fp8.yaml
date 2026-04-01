@@ -65,7 +65,7 @@ benchmark:
     max_tpot_ms: 30
   output_dir: ./auto_benchmark_results/cookbook-llm/llama-4-maverick-17b-128e-instruct-fp8
 search:
-  tier: 3
+  tier: 2
   max_candidates: 24
 speculative:
   enabled: false

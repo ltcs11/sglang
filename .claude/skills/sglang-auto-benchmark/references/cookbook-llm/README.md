@@ -9,6 +9,7 @@ Rules used here:
 - Keep CUDA graph enabled by default.
 - Prefer cookbook H200 defaults first, then H100 defaults when H200 is not available; if neither exists, fall back to the cookbook's published baseline for that model and say so in the config comments.
 - Default to synthetic `random` data so every config is runnable out of the box.
+- Default to `search.tier: 2` so the shipped configs stay reasonably practical to run.
 - Treat `dataset.input_len` and `dataset.output_len` as aligned scenario lists, not a cartesian product.
 - If a candidate OOMs, the result table should recommend increasing GPU count or using GPUs with larger memory.
 
