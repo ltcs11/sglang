@@ -246,17 +246,21 @@ jobs:
             fi
           fi
 
-          # Set max-parallel for each runner type: full vs throttled
+          # Set max-parallel for each runner type
           #   1-gpu-h100: 14 partitions, 1-gpu-5090: 8 partitions, 2-gpu-h100: 4 partitions
           if [[ "$FULL" == "true" ]]; then
+            LEVEL=full
             echo "max_parallel=14" >> $GITHUB_OUTPUT
             echo "max_parallel_small=8" >> $GITHUB_OUTPUT
             echo "max_parallel_2gpu=4" >> $GITHUB_OUTPUT
           else
+            LEVEL=low
             echo "max_parallel=3" >> $GITHUB_OUTPUT
             echo "max_parallel_small=3" >> $GITHUB_OUTPUT
             echo "max_parallel_2gpu=2" >> $GITHUB_OUTPUT
           fi
+          echo "parallel_level=$LEVEL" >> $GITHUB_OUTPUT
+          echo "Parallelism level: $LEVEL"
 
       - name: Set B200 runner tag
         id: set-runner
@@ -323,7 +327,7 @@ jobs:
             echo "| multimodal_gen    | ${{ steps.filter-api.outputs.multimodal_gen || steps.filter.outputs.multimodal_gen || steps.run-mode.outputs.run_all_tests }} |"
             echo "| target_stage      | ${{ inputs.target_stage || '(none)' }} |"
             echo "| detection_method  | ${{ inputs.target_stage && 'GitHub API' || 'dorny/paths-filter' }} |"
-            echo "| max_parallel      | h100=${{ steps.set-parallel.outputs.max_parallel }}, 5090=${{ steps.set-parallel.outputs.max_parallel_small }}, 2gpu=${{ steps.set-parallel.outputs.max_parallel_2gpu }} |"
+            echo "| max_parallel      | ${{ steps.set-parallel.outputs.parallel_level }} (h100=${{ steps.set-parallel.outputs.max_parallel }}, 5090=${{ steps.set-parallel.outputs.max_parallel_small }}, 2gpu=${{ steps.set-parallel.outputs.max_parallel_2gpu }}) |"
             echo "| b200_runner       | ${{ steps.set-runner.outputs.b200_runner }} |"
             echo "| enable_retry      | ${{ steps.set-retry.outputs.enable_retry }} |"
             echo "| continue_on_error | ${{ steps.set-continue-on-error.outputs.continue_on_error }} |"
